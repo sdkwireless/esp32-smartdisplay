@@ -25,11 +25,22 @@ lv_display_t *lvgl_lcd_init()
     lv_display_t *display = lv_display_create(DISPLAY_WIDTH, DISPLAY_HEIGHT);
     log_v("display:0x%08x", display);
     //  Create drawBuffer
-    lv_color_format_t cf = lv_display_get_color_format(display);
-    uint32_t px_size = lv_color_format_get_size(cf);
-    uint32_t drawBufferSize = px_size * LVGL_BUFFER_PIXELS;
-    void *drawBuffer = heap_caps_malloc(drawBufferSize, LVGL_BUFFER_MALLOC_FLAGS);
-    lv_display_set_buffers(display, drawBuffer, NULL, drawBufferSize, LV_DISPLAY_RENDER_MODE_PARTIAL);
+    // lv_color_format_t cf = lv_display_get_color_format(display);
+    // uint32_t px_size = lv_color_format_get_size(cf);
+    // uint32_t drawBufferSize = px_size * LVGL_BUFFER_PIXELS;
+    // void *drawBuffer = heap_caps_malloc(drawBufferSize, LVGL_BUFFER_MALLOC_FLAGS);
+    // lv_display_set_buffers(display, drawBuffer, NULL, drawBufferSize, LV_DISPLAY_RENDER_MODE_PARTIAL);
+
+    // Remove or ignore LVGL_BUFFER_PIXELS; calculate a full-frame size
+    size_t buf_size = DISPLAY_WIDTH * DISPLAY_HEIGHT * sizeof(lv_color_t);
+
+    // Allocate two buffers in PSRAM
+    lv_color_t *buf1 = heap_caps_malloc(buf_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    lv_color_t *buf2 = heap_caps_malloc(buf_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+
+    // Register both buffers with LVGL using the full render mode
+    lv_display_set_buffers(display, buf1, buf2, buf_size, LV_DISPLAY_RENDER_MODE_FULL);
+
 
     // Create direct_io panel handle
     const esp_lcd_rgb_panel_config_t rgb_panel_config = {
